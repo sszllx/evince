@@ -91,6 +91,10 @@
 #include "ev-recent-view.h"
 #include "ev-search-box.h"
 
+// lijing
+#include <Python.h>
+#include <fcntl.h>
+
 #ifdef ENABLE_DBUS
 #include "ev-gdbus-generated.h"
 #include "ev-media-player-keys.h"
@@ -128,6 +132,13 @@ typedef enum {
 	EV_WINDOW_ACTION_RELOAD,
 	EV_WINDOW_ACTION_CLOSE
 } EvWindowAction;
+
+// lijing
+typedef struct {
+	int python_fd;
+	char *python_data;
+	GHashTable *stream;
+} GptAction;
 
 typedef struct {
 	/* UI */
@@ -241,6 +252,9 @@ typedef struct {
 	gboolean has_mailto_handler;
 
 	gboolean password_view_cancelled;
+
+	/* lijing mark */
+	GptAction gpt_action;	
 } EvWindowPrivate;
 
 #define GET_PRIVATE(o) ev_window_get_instance_private (o)
@@ -4575,6 +4589,17 @@ ev_window_cmd_edit_find_previous (GSimpleAction *action,
 		ev_window_find_previous (ev_window);
 }
 
+// lijing
+static void
+ev_window_cmd_gpt (GSimpleAction *action,
+			 GVariant      *parameter,
+			 gpointer       user_data) {
+	EvWindow *ev_window = user_data;
+	EvWindowPrivate *priv = GET_PRIVATE (ev_window);
+
+	ev_view_gpt (EV_VIEW (priv->view));
+}
+
 static void
 ev_window_cmd_edit_copy (GSimpleAction *action,
 			 GVariant      *parameter,
@@ -6286,6 +6311,7 @@ static const GActionEntry actions[] = {
 	{ "print", ev_window_cmd_file_print },
 	{ "show-properties", ev_window_cmd_file_properties },
 	{ "copy", ev_window_cmd_edit_copy },
+	{ "gpt", ev_window_cmd_gpt }, // lijing mark
 	{ "select-all", ev_window_cmd_edit_select_all },
 	{ "go-previous-page", ev_window_cmd_go_previous_page },
 	{ "go-next-page", ev_window_cmd_go_next_page },
@@ -7428,6 +7454,10 @@ ev_window_init (EvWindow *ev_window)
 
 	priv = GET_PRIVATE (ev_window);
 
+	// lijing init
+	// priv->gpt_action.python_fd = open("/exdata/code/evince/python/main.py", O_RDONLY);
+	// priv->gpt_action.python_data = 
+
 #ifdef ENABLE_DBUS
 	connection = g_application_get_dbus_connection (g_application_get_default ());
         if (connection) {
@@ -7599,6 +7629,16 @@ ev_window_init (EvWindow *ev_window)
 			      sidebar_widget,
 			      BOOKMARKS_SIDEBAR_ID, _("Bookmarks"),
 			      BOOKMARKS_SIDEBAR_ICON);
+	
+	// lijing
+	sidebar_widget = ev_sidebar_bookmarks_new ();
+	priv->sidebar_bookmarks = sidebar_widget;
+	gtk_widget_show (sidebar_widget);
+	ev_sidebar_add_page (EV_SIDEBAR (priv->sidebar),
+			      sidebar_widget,
+			      BOOKMARKS_SIDEBAR_ID, _("Bookmarks"),
+			      BOOKMARKS_SIDEBAR_ICON);
+	/////////////////
 
 	sidebar_widget = ev_sidebar_attachments_new ();
 	priv->sidebar_attachments = sidebar_widget;
@@ -7652,6 +7692,11 @@ ev_window_init (EvWindow *ev_window)
 	gtk_widget_show (priv->view_box);
 
 	priv->view = ev_view_new ();
+	// lijing
+    g_signal_connect_object(priv->view, "selection_get", 
+	                 G_CALLBACK(view_actions_focus_in_cb), 
+					 ev_window, 0);
+
 	page_cache_mb = g_settings_get_uint (ev_window_ensure_settings (ev_window),
 					     GS_PAGE_CACHE_SIZE);
 	ev_view_set_page_cache_size (EV_VIEW (priv->view),

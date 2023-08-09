@@ -23,6 +23,7 @@ evince_sources = files(
   'ev-sidebar-annotations.c',
   'ev-sidebar-attachments.c',
   'ev-sidebar-bookmarks.c',
+  'ev-sidebar-gpt.c',
   'ev-sidebar.c',
   'ev-sidebar-layers.c',
   'ev-sidebar-links.c',
@@ -56,6 +57,7 @@ evince_deps = [
 evince_cflags = [
   '-DBINDIR="@0@"'.format(ev_bindir),
   '-DEVINCE_COMPILATION',
+  '-I/usr/include/python3.10/',
 ]
 
 evince_ldflags = common_ldflags

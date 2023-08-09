@@ -68,6 +68,11 @@ void            ev_view_set_allow_links_change_zoom (EvView  *view,
 EV_PUBLIC
 gboolean        ev_view_get_allow_links_change_zoom (EvView  *view);
 
+// lijing add
+/* GPT */
+EV_PUBLIC
+void		ev_view_gpt			  (EvView         *view);
+
 /* Clipboard */
 EV_PUBLIC
 void		ev_view_copy		  (EvView         *view);

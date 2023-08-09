@@ -47,6 +47,11 @@
 #include "ev-view-type-builtins.h"
 #include "ev-debug.h"
 
+// lijing
+#include <Python.h>
+#include <errno.h>
+#include <fcntl.h>
+
 #ifdef ENABLE_MULTIMEDIA
 #include "ev-media-player.h"
 #endif
@@ -5806,6 +5811,7 @@ ev_view_button_press_event (GtkWidget      *widget,
 		case 3:
 			view->scroll_info.start_y = event->y;
 			ev_view_set_focused_element_at_location (view, event->x, event->y);
+			// lijing mark
 			return ev_view_do_popup_menu (view, event->x, event->y);
 	}
 
@@ -8299,6 +8305,8 @@ ev_view_class_init (EvViewClass *class)
 	widget_class->focus = ev_view_focus;
 	widget_class->parent_set = ev_view_parent_set;
 	widget_class->hierarchy_changed = ev_view_hierarchy_changed;
+	// lijing
+	widget_class->selection_get = ev_view_focus_in;
 
 	gtk_widget_class_set_css_name (widget_class, "evview");
 
@@ -10312,6 +10320,42 @@ ev_view_clipboard_copy (EvView      *view,
 	clipboard = gtk_widget_get_clipboard (GTK_WIDGET (view),
 					      GDK_SELECTION_CLIPBOARD);
 	gtk_clipboard_set_text (clipboard, text, -1);
+}
+
+// lijing
+void ev_view_gpt (EvView *ev_view) {
+	char *text;
+
+	if (!EV_IS_SELECTION (ev_view->document))
+		return;
+
+	text = get_selected_text (ev_view);
+    
+    // 构建要执行的命令，将 text 作为参数传递给 main.py
+	char *pcmd = "python3 /exdata/code/evince/python/main.py";
+	long cmd_size = strlen(text) + strlen(pcmd) + 4;
+    char *command = (char *)malloc(cmd_size);
+
+    snprintf(command, cmd_size, "%s \"%s\"", pcmd, text);
+	printf("%s\n", command);
+
+    // 执行命令并读取输出
+    FILE *fp = popen(command, "r");
+    if (fp == NULL) {
+        perror("popen");
+        return;
+    }
+
+    // 读取输出并打印
+    char buffer[1024];
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        printf("=====> %s", buffer);  // 或者根据需求将输出保存到某个数据结构中
+    }
+
+    // 关闭文件指针
+    pclose(fp);
+	free(command);
+	g_free (text);
 }
 
 void

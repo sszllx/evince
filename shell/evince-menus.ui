@@ -61,6 +61,10 @@
     </section>
     <section>
       <item>
+        <attribute name="label" translatable="yes">_GPT</attribute>
+        <attribute name="action">win.gpt</attribute>
+      </item>
+      <item>
         <attribute name="label" translatable="yes">_Copy</attribute>
         <attribute name="action">win.copy</attribute>
       </item>
